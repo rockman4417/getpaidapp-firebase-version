@@ -1,0 +1,1 @@
+# getpaidapp-firebase-version
