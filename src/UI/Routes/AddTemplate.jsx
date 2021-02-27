@@ -91,30 +91,25 @@ import { useHistory } from "react-router-dom";
 const AddClient = (props) => {
 
 
-    const [client, setClient] = useState({
-        first_name: '',
-        last_name: '',
-        business_name: '',
-        address: '',
-        city: '',
-        state: '',
-        zip: '',
-        phone1: '',
-        cell: '',
-        email: ''
+    const [template, setTemplate] = useState({
+        template_name: '',
+        template_amount: '',
+        // product_service: '',
+        template_description: ''
+        
     })
     const { uid } = useSelector((state) => state.firebase.auth);
     useFirestoreConnect({
-        collection: `users/${uid}/clients`,
-        storeAs: "clients",
+        collection: `users/${uid}/templates`,
+        storeAs: "templates",
       });
     const firestore = useFirestore();
     const history = useHistory();
     
     const handleTextChange = (e) => {
-        const newState = { ...client }
+        const newState = { ...template }
         newState[e.target.id] = e.target.value
-        setClient(newState)
+        setTemplate(newState)
     }
 
     
@@ -123,28 +118,28 @@ const AddClient = (props) => {
     const handleSubmit = (e) => {
         e.preventDefault()
         
-        const payload = { ...client }
+        const payload = { ...template }
         // payload.id = props.clients.length + 1
         delete payload.open
-        console.log("THE CLIENT", payload)
+        console.log("THE TEMPLATE", payload)
         
         firestore
           .collection("users")
           .doc(uid)
-          .collection("clients")
+          .collection("templates")
           .add(payload)
           .then((docRef) => {
             docRef.update({
-            clientID: docRef.id,
+            templateID: docRef.id,
         });
       })
 
       .then(()=> {
-        history.push("/clients")
+        history.push("/templates")
       })
         
       
-        console.log("client added!")
+        console.log("template added!")
         
         
     }
@@ -161,65 +156,24 @@ const AddClient = (props) => {
                                 onSubmit={handleSubmit}
                                 style={{ display: 'flex', flexDirection: 'column', width: '50vh'}}>
                                 <TextField 
-                                    id="first_name" 
-                                    placeholder="First Name" 
-                                    value={client.first_name} 
+                                    id="template_name" 
+                                    placeholder="Template Name" 
+                                    value={template.template_name} 
                                     onChange={handleTextChange} 
                                     required />
                                 <TextField 
-                                    id="last_name" 
-                                    placeholder="Last Name" 
-                                    value={client.last_name} 
+                                    id="template_amount" 
+                                    placeholder="Amount" 
+                                    value={template.template_amount} 
                                     onChange={handleTextChange} 
                                     required />
                                 <TextField 
-                                    id="business_name" 
-                                    placeholder="Business Name" 
-                                    value={client.business_name} 
-                                    onChange={handleTextChange} 
-                                     />
-                                <TextField 
-                                    id="address" 
-                                    placeholder="Address" 
-                                    value={client.address} 
-                                    onChange={handleTextChange} 
-                                     />
-                                <TextField 
-                                    id="city" 
-                                    placeholder="City" 
-                                    value={client.city} 
-                                    onChange={handleTextChange} 
-                                     />
-                                <TextField 
-                                    id="state" 
-                                    placeholder="State" 
-                                    value={client.state} 
-                                    onChange={handleTextChange} 
-                                     />
-                                <TextField 
-                                    id="zip" 
-                                    placeholder="Zip" 
-                                    value={client.zip} 
-                                    onChange={handleTextChange} 
-                                     />
-                                <TextField 
-                                    id="phone1" 
-                                    placeholder="Phone1" 
-                                    value={client.phone1} 
-                                    onChange={handleTextChange} 
-                                     />
-                                <TextField 
-                                    id="cell" 
-                                    placeholder="Cell" 
-                                    value={client.cell} 
+                                    id="template_description" 
+                                    placeholder="Description" 
+                                    value={template.template_description} 
                                     onChange={handleTextChange} 
                                     required />
-                                <TextField 
-                                    id="email" 
-                                    placeholder="Email Address" 
-                                    value={client.email} 
-                                    onChange={handleTextChange} 
-                                     />
+                               
                                 <br />
                                 
                                     <Button variant="contained" color="primary" type="submit">Submit</Button>

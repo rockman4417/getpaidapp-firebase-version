@@ -1,124 +1,125 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { AppBar, Toolbar, 
     Typography, Button } from '@material-ui/core'
-import AccountCircle from '@material-ui/icons/AccountCircle';
-import Switch from '@material-ui/core/Switch';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormGroup from '@material-ui/core/FormGroup';
-import MenuItem from '@material-ui/core/MenuItem';
-import Menu from '@material-ui/core/Menu';
 import { makeStyles } from '@material-ui/core/styles';
-import IconButton from '@material-ui/core/IconButton';
-
-import HomeButton from './HomeButton'
-import HamburgerDrawr from './HamburgerDrawr'
-
 import { Link } from 'react-router-dom'
-import cookie from 'cookie'
+import { useSelector } from "react-redux";
+import { isEmpty, isLoaded } from 'react-redux-firebase';
 
 
-const useStyles = makeStyles((theme) => ({
 
-  root: {
-    flexGrow: 1,
-  },
-  menuButton: {
-    marginRight: theme.spacing(2),
-  },
-  title: {
-    flexGrow: 1,
-  },
-}));
-
-
-const checkAuth = () => {
-    const cookies = cookie.parse(document.cookie)
-    console.log('looking up cookies')
-    return cookies["loggedIn"] ? true : false
-    
-}
 
 const Navigation = (props) => {
-    const classes = useStyles();
+    
+    
 
-    const [loggedIn, setLoggedIn] = useState(false)
-    const [anchorEl, setAnchorEl] = React.useState(null);
-    const open = Boolean(anchorEl);
+    let { displayName, uid } = useSelector((state) => state.firebase.auth)
+    
+    
+
+    useEffect(()=>{console.log('uid', displayName)}, [])
+    
 
 
-    useEffect (() => {checkAuth() ? setLoggedIn(true) : setLoggedIn(false)}, [])
-
-    const handleMenu = (event) => {
-      setAnchorEl(event.currentTarget);
-    };
-  
-    const handleClose = () => {
-      setAnchorEl(null);
-    };
         
     
     const logout = () => {
-        document.cookie = "loggedIn=;expires=Thu, 01 Jan 1970 00:00:00 GMT"
         
-        if(loggedIn) {
+        
             window.location.replace("/login")
-        }
+            
+        
     }
 
 
+if(isEmpty(uid)) {
 
-    
+  return (
 
-    return (
-
-        <div>
-                <AppBar position="relative" >
-                <Toolbar >
-                    {/* <HamburgerDrawr/> */}
-                    <Typography variant="h6" style={{ flexGrow: "1" }}>
-                        GET PAID APP
-                    </Typography>
-                    <ul className="nav-list" style={{listStyleType: "none", display: "flex"}}>
-                        
-                        {loggedIn ? 
-                        <li className="nav-list-item" style={{display: 'flex'}}>
-                            
+    <div>
+       
+           <AppBar position="relative" >
+           <Toolbar >
               
-                <HomeButton/>
-                          
+               <Typography variant="h6" style={{ flexGrow: "1", paddingLeft: '800px' }}>
+                   
+                   GET PAID APP
+                   
+                   
+               </Typography>
+               <ul className="nav-list" style={{listStyleType: "none", display: "flex"}}>
+                   
+                   <li className="nav-list-item" style={{display: 'flex'}}>
+          
+           
+                   </li>  
+                   
+                   <li className="nav-list-item" style={{display: 'flex'}}>
+                       <Link to="/dashboard"  style={{ textDecoration: 'none', color: "white"  }}><Button color="inherit" >Dashboard</Button></Link>
+                   </li>
+                   <li className="nav-list-item" style={{display: 'flex'}}>
+                       <Link to="/" onClick={logout} style={{ textDecoration: 'none', color: "white"  }}><Button color="inherit" >Login</Button></Link>
+                   </li>
+               </ul>
+           </Toolbar>
+       </AppBar>
+       
+       </div>
+   )
 
-                <IconButton
-                aria-label="account of current user"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
-                onClick={handleMenu}
-                color="inherit"
-              >
-                <AccountCircle />
-              </IconButton>    
-                
-                        </li>  
-                        : null}
-                        <li className="nav-list-item" style={{display: 'flex'}}>
-                            <Link to="/" onClick={logout} style={{ textDecoration: 'none', color: "white"  }}><Button color="inherit" >{loggedIn ? "Logout" : "Login"}</Button></Link>
-                        </li>
-                    </ul>
-                </Toolbar>
-            </AppBar>
-            {loggedIn ? 
-            <AppBar position="relative" style={{backgroundColor: '#B8B8B8', height: '25px', marginBottom: '50px'}}>
-            <Toolbar style={{display: 'flex', alignItems: 'flex-start'}}>
-                    
-                    <Typography variant="p" style={{ flexGrow: "1" }}>
-                        {/* Logged in as: {props.user.username}  */}
-                    </Typography>
-                    
-                </Toolbar>
-            </AppBar>  
-            : null}
-            </div>
-        )
-    
+}
+
+
+if(isLoaded(uid)) {
+
+  return (
+
+    <div>
+       
+           <AppBar position="relative" >
+           <Toolbar style={{marginLeft: '230px'}}>
+               
+               <Typography variant="h6" style={{ flexGrow: "1" }}>
+                   GET PAID APP
+               </Typography>
+               <ul className="nav-list" style={{listStyleType: "none", display: "flex"}}>
+                   
+                  
+                   <li className="nav-list-item" style={{display: 'flex'}}>
+                       
+         
+           
+                   </li>  
+                  
+                   <li className="nav-list-item" style={{display: 'flex'}}>
+                       <Link to="/dashboard"  style={{ textDecoration: 'none', color: "white"  }}><Button color="inherit" >Dashboard</Button></Link>
+                   </li>
+                   <li className="nav-list-item" style={{display: 'flex'}}>
+                       <Link to="/" onClick={logout} style={{ textDecoration: 'none', color: "white"  }}><Button color="inherit" >Logout</Button></Link>
+                   </li>
+               </ul>
+           </Toolbar>
+       </AppBar>
+       
+       <AppBar position="relative" style={{backgroundColor: '#B8B8B8', height: '20px', marginBottom: '50px', paddingTop: '2px'}}>
+       <Toolbar style={{display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start'}}>
+               
+               <Typography variant="p" style={{ flexGrow: "1", fontFamily: "Roboto, Helvetica, Arial, sans-serif"}}>
+                   Welcome {displayName}!
+               </Typography>
+               
+           </Toolbar>
+       </AppBar>  
+       
+       </div>
+   )
+
+
+}
+
+
+
+
 }
 
 export default Navigation
