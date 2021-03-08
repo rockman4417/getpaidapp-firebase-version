@@ -29,7 +29,13 @@ import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
 
 import ChipDeletable from '../Components/Chips/ChipDeleteable'
+import AddIcon from '@material-ui/icons/Add';
+import RemoveIcon from '@material-ui/icons/Remove';
+import Fab from '@material-ui/core/Fab'
 import moment from 'moment'
+import { DataGrid } from '@material-ui/data-grid';
+import AddInvoiceStepsWrapper from './AddInvoiceFlow/AddInvoiceStepsWrapper'
+
 
 
 
@@ -104,6 +110,7 @@ const AddInvoice = (props) => {
     const [notes, setNotes] = useState()
     const [templateNames, setTemplateNames] = useState([])
     const { uid } = useSelector((state) => state.firebase.auth);
+    const [selection, setSelection] = useState()
     
     useFirestoreConnect([{
         
@@ -128,12 +135,40 @@ const AddInvoice = (props) => {
     // }
     const clients = useSelector((state) => state.firestore.data.clients)
     const templates = useSelector((state) => state.firestore.data.templates)
-    console.log("clients", clients)
-    console.log("templates", templates)
     if(templates) {templatesArray = Object.values(templates)}
     if(clients) {clientsArray = Object.values(clients)}
-    console.log("templates array", templatesArray)
-    console.log("clients array", clientsArray)
+
+    const columns = [
+      { field: 'addRemove', headerName: 'Add/Remove', width: 200, renderCell: (params) => (
+        <strong>
+          <Fab size="small" color="secondary" aria-label="add">
+            <RemoveIcon/>
+          </Fab>
+          <TextField id="standard-basic" style={{width: '20px'}} />
+          <Fab size="small" color="primary" aria-label="add" onClick={handleChangeTest}>
+            <AddIcon />
+          </Fab>
+          
+        </strong>
+      ),},
+      { field: 'id', headerName: 'ID', width: 150 },
+      { field: 'templateName', headerName: 'Template Name', width: 230 },
+      { field: 'templateAmount', headerName: 'Amount', width: 150 },
+      
+      {
+        field: 'description',
+        headerName: 'Description',
+        description: 'This column has a value getter and is not sortable.',
+        sortable: false,
+        width: 300,
+        
+      },
+    ];
+
+    const rows = templates && templatesArray.map((template, idx) => {return {id: idx, 
+                                                                             templateName: template.template_name, 
+                                                                             templateAmount: template.template_amount, 
+                                                                             description: template.template_description}}) 
 
 
     const handleSubmit = (e) => {
@@ -177,15 +212,19 @@ const AddInvoice = (props) => {
       }
       setTotalAmount(total)
       console.log('total', totalAmount)
+      console.log('selection', selection)
     
     
     
     }, [invoiceTemplates])
 
+    const handleChangeTest = (event) => {
+      console.log('event.target.value', event.target.value)
+    }
 
     const handleChangeTemplates = (event) => {
         
-
+        console.log('event.target.value', event.target.value)
         setInvoiceTemplates([...event.target.value]);
         
         let total = 0
@@ -246,6 +285,9 @@ const AddInvoice = (props) => {
         return (
             
             <div>
+              <div>
+              <AddInvoiceStepsWrapper/>
+            </div>
             
             <FormControl className={classes.formControl}>
               <InputLabel id="demo-mutiple-checkbox-label">Templates</InputLabel>
@@ -263,11 +305,16 @@ const AddInvoice = (props) => {
                   <MenuItem key={template.templateID} value={template}>
                     
                     <Checkbox checked={invoiceTemplates.indexOf(template) > -1} />
+                    
                     <ListItemText primary={template.template_name} />
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
+
+            <div style={{ height: 400, width: '50%' }}>
+              <DataGrid rows={rows} columns={columns} pageSize={5} checkboxSelection onSelectionChange={console.log('hello')} />
+            </div>
 
 
             <FormControl className={classes.formControl}>
@@ -337,6 +384,7 @@ const AddInvoice = (props) => {
               </CardActions>
             </Card>
             <Button variant="contained" color="primary" type="submit" onClick={handleSubmit}>Submit</Button>
+            
            </div>
                         
         )
