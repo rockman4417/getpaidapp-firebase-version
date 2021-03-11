@@ -286,7 +286,7 @@ const AddInvoice = (props) => {
             
             <div>
               <div>
-              <AddInvoiceStepsWrapper/>
+              <AddInvoiceStepsWrapper handleDelete={handleDelete} handleChangeMultiple={handleChangeMultiple} />
             </div>
             
             <FormControl className={classes.formControl}>
