@@ -11,7 +11,7 @@ import ClientDetails from "./UI/Routes/Details/ClientDetails"
 import TemplateDetails from "./UI/Routes/Details/TemplateDetails"
 import InvoiceDetails from "./UI/Routes/Details/InvoiceDetails"
 import Navigation from "./UI/Components/Navigation/Navigation"
-import Dashboard from "./UI/Routes/Dashboard"
+import DashboardWrapper from "./UI/Routes/DashboardWrapper"
 import {Switch, Route} from "react-router-dom";
 import Test from "./UI/Components/Test"
 import EditClient from './UI/Routes/EditClient'
@@ -31,7 +31,7 @@ function App() {
       <Switch>
 
         <PrivateRoute path = "/dashboard">
-          <Dashboard/>
+          <DashboardWrapper/>
         </PrivateRoute>
 
         <Route path='/details/client/:id' component={ClientDetails} />

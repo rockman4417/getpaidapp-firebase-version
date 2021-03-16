@@ -29,13 +29,61 @@ import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
 
 import ChipDeletable from '../Components/Chips/ChipDeleteable'
-import AddIcon from '@material-ui/icons/Add';
-import RemoveIcon from '@material-ui/icons/Remove';
-import Fab from '@material-ui/core/Fab'
 import moment from 'moment'
-import { DataGrid } from '@material-ui/data-grid';
-import AddInvoiceStepsWrapper from './AddInvoiceFlow/AddInvoiceStepsWrapper'
 
+import Stepper from '@material-ui/core/Stepper';
+import Step from '@material-ui/core/Step';
+import StepLabel from '@material-ui/core/StepLabel';
+
+import {PDFViewer} from '@react-pdf/renderer'
+import Invoice from '../Components/Invoice/Invoice'
+import {Link} from 'react-router-dom'
+
+
+
+const invoiceData = {
+  id: "5df3180a09ea16dc4b95f910",
+  invoice_no: "201906-28",
+  balance: "$2,283.74",
+  company: "MANTRIX",
+  email: "susanafuentes@mantrix.com",
+  phone: "+1 (872) 588-3809",
+  address: "922 Campus Road, Drytown, Wisconsin, 1986",
+  trans_date: "2019-09-12",
+  due_date: "2019-10-12",
+  items: [
+    {
+      sno: 1,
+      desc: "ad sunt culpa occaecat qui",
+      qty: 5,
+      rate: 405.89,
+    },
+    {
+      sno: 2,
+      desc: "cillum quis sunt qui aute",
+      qty: 5,
+      rate: 373.11,
+    },
+    {
+      sno: 3,
+      desc: "ea commodo labore culpa irure",
+      qty: 5,
+      rate: 458.61,
+    },
+    {
+      sno: 4,
+      desc: "nisi consequat et adipisicing dolor",
+      qty: 10,
+      rate: 725.24,
+    },
+    {
+      sno: 5,
+      desc: "proident cillum anim elit esse",
+      qty: 4,
+      rate: 141.02,
+    },
+  ],
+};
 
 
 
@@ -56,6 +104,7 @@ const useStyles = makeStyles((theme) => ({
       marginTop: theme.spacing(3),
     },
     root: {
+      margin: theme.spacing(1),
       minWidth: 275,
       
     },
@@ -73,6 +122,20 @@ const useStyles = makeStyles((theme) => ({
     selectEmpty: {
       marginTop: theme.spacing(2),
     },
+    button: {
+      marginRight: theme.spacing(1),
+    },
+    instructions: {
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+    },
+    finalOptionsButton : {
+      width: '250px'
+    },
+    stepperContentTypography : {
+      marginBottom: '50px',
+      marginTop: '50px'
+    }
   }));
   
   const ITEM_HEIGHT = 48;
@@ -97,6 +160,8 @@ const useStyles = makeStyles((theme) => ({
     };
   }
 
+  
+
 
 const AddInvoice = (props) => {
 
@@ -110,7 +175,167 @@ const AddInvoice = (props) => {
     const [notes, setNotes] = useState()
     const [templateNames, setTemplateNames] = useState([])
     const { uid } = useSelector((state) => state.firebase.auth);
-    const [selection, setSelection] = useState()
+    const [checkedToEmail, setCheckedToEmail] = useState(false)
+    
+
+    /////////////////////Stepper Functions//////////////////////////////////////////////////////////
+    const [activeStep, setActiveStep] = React.useState(0);
+    const [skipped, setSkipped] = React.useState(new Set());
+    const steps = getSteps();
+
+    const isStepOptional = (step) => {
+      return false
+    };
+  
+    const isStepSkipped = (step) => {
+      return skipped.has(step);
+    };
+  
+    const handleNext = () => {
+      let newSkipped = skipped;
+      if (isStepSkipped(activeStep)) {
+        newSkipped = new Set(newSkipped.values());
+        newSkipped.delete(activeStep);
+      }
+  
+      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      setSkipped(newSkipped);
+    };
+  
+    const handleBack = () => {
+      setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    };
+  
+    const handleSkip = () => {
+      if (!isStepOptional(activeStep)) {
+        // You probably want to guard against something like this,
+        // it should never occur unless someone's actively trying to break something.
+        throw new Error("You can't skip a step that isn't optional.");
+      }
+  
+      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      setSkipped((prevSkipped) => {
+        const newSkipped = new Set(prevSkipped.values());
+        newSkipped.add(activeStep);
+        return newSkipped;
+      });
+    };
+  
+    const handleReset = () => {
+      setActiveStep(0);
+    };
+
+
+    function getSteps() {
+      return ['Select a Client', 'Add Your Templates', 'Summary'];
+    }
+    
+
+    //////////////////////STEPPER CONTENT/////////////////////////////////////////////////
+    function getStepContent(step) {
+      switch (step) {
+        case 0:
+          return <div style={{display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
+                  <Typography className={classes.stepperContentTypography}>This will walk you through setting up your Invoice.  Start by selecting the Client this work was for.</Typography>
+                  <FormControl className={classes.formControl}>
+                    <InputLabel id="demo-simple-select-helper-label">Client</InputLabel>
+                      <Select
+                        labelId="demo-simple-select-helper-label"
+                        id="demo-simple-select-helper"
+                        value={invoiceClient}
+                        onChange={handleChangeClient}
+                      >
+                          {clients && clientsArray.map((client) => (
+                            <MenuItem key={client.clientID} value={client}>
+                            
+                            
+                            <ListItemText primary={client.first_name + " " + client.last_name} />
+                          </MenuItem>
+                        ))}
+  
+  
+                        
+                      </Select>
+                      <FormHelperText>Select a Client</FormHelperText>
+                  </FormControl>
+  
+                  <Card className={classes.root} style={{width: '500px', height: '250px', margin: '15px'}}>
+                    <CardContent>
+                      <Typography variant="h5" component="h2">Client</Typography>
+                    </CardContent>
+  
+                    <CardActions style={{display: 'flex', justifyContent: 'center'}}>
+                    {invoiceClient.first_name && <ChipDeletable content={invoiceClient.first_name + " " + invoiceClient.last_name} handleDelete={handleDelete}>{console.log("invoice client",invoiceClient)}</ChipDeletable>}
+                    </CardActions>
+                  </Card>
+                </div>
+        case 1:
+          return <div style={{display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
+                      <Typography className={classes.stepperContentTypography}>Great!  Now add any Templates for the work you did.</Typography>
+                      <FormControl className={classes.formControl}>
+                        <InputLabel id="demo-mutiple-checkbox-label">Templates</InputLabel>
+                        <Select
+                          labelId="demo-mutiple-checkbox-label"
+                          id="demo-mutiple-checkbox"
+                          multiple
+                          value={invoiceTemplates}
+                          onChange={handleChangeTemplates}
+                          input={<Input />}
+                          renderValue={()=>templateNames.join(', ')}
+                          MenuProps={MenuProps}
+                        >
+                          {templates && templatesArray.map((template) => (
+                            <MenuItem key={template.templateID} value={template}>
+                              
+                              <Checkbox checked={invoiceTemplates.indexOf(template) > -1} />
+                              <ListItemText primary={template.template_name} />
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+  
+                      <Card className={classes.root} style={{width: '500px', height: '250px', margin: '15px'}}>
+                        <CardContent>
+                  
+                          <Typography variant="h5" component="h2">
+                            Templates
+                          </Typography>
+                            
+                  
+                        </CardContent>
+                        <CardActions style={{display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
+                          <div style={{display: 'flex', justifyContent: 'center'}}>
+                            {templates && invoiceTemplates && invoiceTemplates.map((template) => (
+                                
+                                  <ChipDeletable content={template.template_name} template={template} handleDelete={handleDelete} >{console.log('template', template)}</ChipDeletable>
+                                
+  
+  
+                            ))}
+  
+                          </div>
+                            
+                            <p>Total {" " + "$" + totalAmount}</p>
+                        </CardActions>
+                      </Card>
+                </div>
+          
+          
+          
+        case 2:
+          return    <div> 
+                        <Typography className={classes.stepperContentTypography}>Here's a Summary of your Invoice! You can download or print a copy of the PDF.  Press Back to make any changes, or if everything looks good press Finish to finalize.</Typography>
+                        <PDFViewer width="1000" height="600" className="app" >
+                            <Invoice invoice={invoiceData}/>
+                        </PDFViewer>
+                    </div>
+                     
+          
+        default:
+          return 'Unknown step';
+      }
+    }
+    /////////////////////////////END OF STEPPER FUNCTIONALITY////////////////////////////////////////////////////
     
     useFirestoreConnect([{
         
@@ -135,44 +360,15 @@ const AddInvoice = (props) => {
     // }
     const clients = useSelector((state) => state.firestore.data.clients)
     const templates = useSelector((state) => state.firestore.data.templates)
+    console.log("clients", clients)
+    console.log("templates", templates)
     if(templates) {templatesArray = Object.values(templates)}
     if(clients) {clientsArray = Object.values(clients)}
-
-    const columns = [
-      { field: 'addRemove', headerName: 'Add/Remove', width: 200, renderCell: (params) => (
-        <strong>
-          <Fab size="small" color="secondary" aria-label="add">
-            <RemoveIcon/>
-          </Fab>
-          <TextField id="standard-basic" style={{width: '20px'}} />
-          <Fab size="small" color="primary" aria-label="add" onClick={handleChangeTest}>
-            <AddIcon />
-          </Fab>
-          
-        </strong>
-      ),},
-      { field: 'id', headerName: 'ID', width: 150 },
-      { field: 'templateName', headerName: 'Template Name', width: 230 },
-      { field: 'templateAmount', headerName: 'Amount', width: 150 },
-      
-      {
-        field: 'description',
-        headerName: 'Description',
-        description: 'This column has a value getter and is not sortable.',
-        sortable: false,
-        width: 300,
-        
-      },
-    ];
-
-    const rows = templates && templatesArray.map((template, idx) => {return {id: idx, 
-                                                                             templateName: template.template_name, 
-                                                                             templateAmount: template.template_amount, 
-                                                                             description: template.template_description}}) 
+    console.log("templates array", templatesArray)
+    console.log("clients array", clientsArray)
 
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
+    const handleSubmit = () => {
         
         const payload = { client: invoiceClient,
                           templates: invoiceTemplates,
@@ -196,12 +392,12 @@ const AddInvoice = (props) => {
         
       })
 
-      .then(()=> {
-        history.push("/invoices")
-      })
+      // .then(()=> {
+      //   history.push("/invoices")
+      // })
         
       
-        console.log("invoice added!")
+        console.log("invoice added!", invoiceClient)
     }
 
     useEffect(() => {
@@ -212,19 +408,15 @@ const AddInvoice = (props) => {
       }
       setTotalAmount(total)
       console.log('total', totalAmount)
-      console.log('selection', selection)
     
     
     
     }, [invoiceTemplates])
 
-    const handleChangeTest = (event) => {
-      console.log('event.target.value', event.target.value)
-    }
 
     const handleChangeTemplates = (event) => {
         
-        console.log('event.target.value', event.target.value)
+
         setInvoiceTemplates([...event.target.value]);
         
         let total = 0
@@ -278,114 +470,107 @@ const AddInvoice = (props) => {
         
         
       };
+
+      const nullFunction = () => {}
     
 
 
    
         return (
-            
-            <div>
-              <div>
-              <AddInvoiceStepsWrapper handleDelete={handleDelete} handleChangeMultiple={handleChangeMultiple} />
-            </div>
-            
-            <FormControl className={classes.formControl}>
-              <InputLabel id="demo-mutiple-checkbox-label">Templates</InputLabel>
-              <Select
-                labelId="demo-mutiple-checkbox-label"
-                id="demo-mutiple-checkbox"
-                multiple
-                value={invoiceTemplates}
-                onChange={handleChangeTemplates}
-                input={<Input />}
-                renderValue={()=>templateNames.join(', ')}
-                MenuProps={MenuProps}
-              >
-                {templates && templatesArray.map((template) => (
-                  <MenuItem key={template.templateID} value={template}>
-                    
-                    <Checkbox checked={invoiceTemplates.indexOf(template) > -1} />
-                    
-                    <ListItemText primary={template.template_name} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <div style={{ height: 400, width: '50%' }}>
-              <DataGrid rows={rows} columns={columns} pageSize={5} checkboxSelection onSelectionChange={console.log('hello')} />
-            </div>
 
 
-            <FormControl className={classes.formControl}>
-              <InputLabel id="demo-simple-select-helper-label">Client</InputLabel>
-              <Select
-                labelId="demo-simple-select-helper-label"
-                id="demo-simple-select-helper"
-                value={invoiceClient}
-                onChange={handleChangeClient}
-              >
-                   {clients && clientsArray.map((client) => (
-                    <MenuItem key={client.clientID} value={client}>
-                    
-                    
-                    <ListItemText primary={client.first_name + " " + client.last_name} />
-                  </MenuItem>
-                ))}
+
+                  <div className={classes.root}>
+                      <Stepper activeStep={activeStep}>
+                        {steps.map((label, index) => {
+                          const stepProps = {};
+                          const labelProps = {};
+                          if (isStepOptional(index)) {
+                            labelProps.optional = <Typography variant="caption">Optional</Typography>;
+                          }
+                          if (isStepSkipped(index)) {
+                            stepProps.completed = false;
+                          }
+                          return (
+                            <Step key={label} {...stepProps}>
+                              <StepLabel {...labelProps}>{label}</StepLabel>
+                            </Step>
+                          );
+                        })}
+                      </Stepper>
+                      <div>
+                        {activeStep === steps.length ? (
+                          <div>
+                            <Typography className={classes.stepperContentTypography}>
+                              Your Invoice has been created!  What would you like to do next?  
+                            </Typography>
+                            
+                            <div style={{display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
+                            <Card className={classes.root} style={{width: '500px', height: '300px', margin: '15px', display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
+                              
+                              <CardActions style={{display: 'flex', justifyContent: 'center', flexDirection: 'column'}}>
+                                    <a href={'https://mail.google.com/mail/?view=cm&fs=1&to=' + invoiceClient.email + '&su=SUBJECT&body=BODY'} target="_blank" style={{textDecoration: 'none'}}>
+                                      <Button variant="contained"
+                                          color="primary" className={classes.finalOptionsButton}>
+                                        Email a Copy to Client
+                                      </Button>
+                                    </a>
+                                  
+                                  
+                                    <Typography className={classes.instructions}>
+                                      --
+                                    </Typography>
+
+                                    <Link to="/addinvoice" style={{ textDecoration: 'none', color: "white"  }}>
+                                      <Button variant="contained"
+                                          color="primary" onClick={handleReset} className={classes.finalOptionsButton}>
+                                        Create Another Invoice
+                                      </Button>
+                                    </Link>
+                                    <Typography className={classes.instructions}>
+                                     --
+                                    </Typography>
+                                    <Link to="/dashboard" style={{ textDecoration: 'none', color: "white"  }}>
+                                      <Button variant="contained"
+                                        color="primary" onClick={handleReset} className={classes.finalOptionsButton}>
+                                        Return to Dashboard
+                                      </Button>
+                                    </Link>
 
 
-                
-              </Select>
-              <FormHelperText>Select a Client</FormHelperText>
-            </FormControl>
+
+                              
+                              </CardActions>
+                            </Card>
 
 
-            <Card className={classes.root} style={{width: '500px', height: '250px', margin: '15px'}}>
-              <CardContent>
+                            </div>
+                            
+                            
+                          </div>
+                        ) : (
+                          <div>
+                            <Typography className={classes.instructions}>{getStepContent(activeStep)}</Typography>
+                            <div>
+                              <Button disabled={activeStep === 0} onClick={handleBack} className={classes.button}>
+                                Back
+                              </Button>
+                              
+
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={()=> {handleNext(); activeStep === steps.length - 1 ? handleSubmit() : nullFunction()}}
+                                className={classes.button}
+                              >
+                                {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
         
-                <Typography variant="h5" component="h2">
-                  Templates
-                </Typography>
-                  
-        
-              </CardContent>
-              <CardActions style={{display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
-                <div style={{display: 'flex', justifyContent: 'center'}}>
-                  {templates && invoiceTemplates && invoiceTemplates.map((template) => (
-                       
-                        <ChipDeletable content={template.template_name} template={template} handleDelete={handleDelete} >{console.log('template', template)}</ChipDeletable>
-                       
-
-
-                  ))}
-
-                </div>
-                  
-                  <p>Total {" " + "$" + totalAmount}</p>
-              </CardActions>
-            </Card>
-
-            <Card className={classes.root} style={{width: '500px', height: '250px', margin: '15px'}}>
-              <CardContent>
-        
-                <Typography variant="h5" component="h2">
-                  Client
-                </Typography>
-                  
-        
-              </CardContent>
-              <CardActions style={{display: 'flex', justifyContent: 'center'}}>
-                  
-                       
-                       {invoiceClient.first_name && <ChipDeletable content={invoiceClient.first_name + " " + invoiceClient.last_name} handleDelete={handleDelete}>{console.log("invoice client",invoiceClient)}</ChipDeletable>}
-
-
-                  
-              </CardActions>
-            </Card>
-            <Button variant="contained" color="primary" type="submit" onClick={handleSubmit}>Submit</Button>
-            
-           </div>
                         
         )
 }
